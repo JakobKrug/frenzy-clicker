@@ -46,6 +46,7 @@ javascript: (function () {
       toggle.className = "listing";
       let onOff = document.createElement("a");
       onOff.className = "option";
+      onOff.id = "frenzyClickerToggle";
       onOff.textContent = "Auto-clicking " + self.Enabled ? "ON" : "OFF";
       onOff.onclick = self.toggleMod;
       toggle.appendChild(onOff);
@@ -92,14 +93,20 @@ javascript: (function () {
 
     toggleMod() {
       self.Enabled = !self.Enabled;
-      if (!self.Enabled && self.isRunning()) {
-        self.mainTicker = clearInterval(self.mainTicker);
-        self.debug("Frenzy Clicker paused.");
+      let button = document.getElementById("frenzyClickerToggle");
+      if (button) {
+        button.textContent = "Auto-clicking " + (self.Enabled ? "ON" : "OFF");
       }
-      if (self.Enabled && !self.isRunning()) {
+
+      if (!self.Enabled && self.isRunning()) {
+        clearInterval(self.mainTicker);
+        self.mainTicker = 0;
+        self.debug("Frenzy Clicker paused.");
+      } else if (self.Enabled && !self.isRunning()) {
         self.resume();
         self.debug("Frenzy Clicker resumed.");
       }
+
       self.settingsChanged();
     }
 
