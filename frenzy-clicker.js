@@ -41,16 +41,28 @@ javascript: (function () {
       // Header
       el.appendChild(div);
 
-      // Toggle
-      let toggle = document.createElement("div");
-      toggle.className = "listing";
+      // Toggle & Description
+      let toggleContainer = document.createElement("div");
+      toggleContainer.className = "listing";
+
       let onOff = document.createElement("a");
       onOff.className = "option";
-      onOff.id = "frenzyClickerToggle";
-      onOff.textContent = "Auto-clicking " + self.Enabled ? "ON" : "OFF";
-      onOff.onclick = self.toggleMod;
-      toggle.appendChild(onOff);
-      el.appendChild(toggle);
+      onOff.id = "FrenzyClicker_Toggle";
+      onOff.textContent = "Auto-clicking " + (self.Enabled ? "ON" : "OFF");
+
+      // Use an arrow function here to ensure 'self' is recognized correctly
+      onOff.onclick = function () {
+        self.toggleMod();
+      };
+
+      toggleContainer.appendChild(onOff);
+
+      // Added Description Label
+      let toggleLabel = document.createElement("label");
+      toggleLabel.textContent = " (Enable or disable all auto-clicking logic)";
+      toggleContainer.appendChild(toggleLabel);
+
+      el.appendChild(toggleContainer);
 
       // Speed
       let speed = document.createElement("div");
@@ -93,20 +105,28 @@ javascript: (function () {
 
     toggleMod() {
       self.Enabled = !self.Enabled;
-      let button = document.getElementById("frenzyClickerToggle");
+
+      // 1. Force the UI to update the text immediately
+      let button = document.getElementById("FrenzyClicker_Toggle");
       if (button) {
         button.textContent = "Auto-clicking " + (self.Enabled ? "ON" : "OFF");
       }
 
-      if (!self.Enabled && self.isRunning()) {
-        clearInterval(self.mainTicker);
-        self.mainTicker = 0;
+      // 2. Handle the interval logic
+      if (!self.Enabled) {
+        if (self.mainTicker) {
+          clearInterval(self.mainTicker);
+          self.mainTicker = 0;
+        }
         self.debug("Frenzy Clicker paused.");
-      } else if (self.Enabled && !self.isRunning()) {
-        self.resume();
+      } else {
+        if (!self.isRunning()) {
+          self.resume();
+        }
         self.debug("Frenzy Clicker resumed.");
       }
 
+      // 3. Save settings
       self.settingsChanged();
     }
 
