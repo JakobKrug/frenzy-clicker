@@ -6,7 +6,7 @@ A simple add-on for [Cookie Clicker](http://orteil.dashnet.org/cookieclicker/) t
 
 Create a bookmark with this line in the address bar:
 
-    javascript:( function () { Game.LoadMod('https://github.com/JakobKrug/frenzy-clicker/blob/master/frenzy-clicker.js'); }() );
+    javascript:( function () { Game.LoadMod('https://cdn.jsdelivr.net/gh/JakobKrug/frenzy-clicker@main/frenzy-clicker.js'); }() );
 
 With Cookie Clicker open, click the bookmark.
 
@@ -20,5 +20,5 @@ Frenzy Clicker should not conflict with any other mods (using other auto-clicker
 
     javascript:( function () {
       Game.LoadMod('https://aktanusa.github.io/CookieMonster/CookieMonster.js');
-      Game.LoadMod('https://github.com/JakobKrug/frenzy-clicker/blob/master/frenzy-clicker.js');
+      Game.LoadMod('https://cdn.jsdelivr.net/gh/JakobKrug/frenzy-clicker@main/frenzy-clicker.js');
     }() );
