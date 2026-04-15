@@ -24,6 +24,7 @@ javascript: (function () {
         ]));
       this.hadBuffs = false;
       this.hadCookieStorm = false;
+      this._toggleButton = null;
 
       window.FrenzyClicker = this;
     }
@@ -48,8 +49,11 @@ javascript: (function () {
       onOff.id = "FrenzyClicker_Toggle"; // Added ID for reliable updating
       onOff.textContent = "Auto-clicking " + (self.Enabled ? "ON" : "OFF");
 
-      onOff.onclick = function () {
-        self.toggleMod();
+      // Keep a direct reference to the toggle button on the instance so updates don't rely solely on querying the DOM.
+      this._toggleButton = onOff;
+      // Use an arrow callback so `this` inside the handler refers to the class instance.
+      onOff.onclick = () => {
+        this.toggleMod();
       };
 
       toggleContainer.appendChild(onOff);
@@ -109,30 +113,32 @@ javascript: (function () {
     }
 
     toggleMod() {
-      self.Enabled = !self.Enabled;
+      // toggle the enabled flag on the instance
+      this.Enabled = !this.Enabled;
 
-      // Force text update on the specific button ID
-      let button = document.getElementById("FrenzyClicker_Toggle");
+      // Prefer the stored DOM reference; fall back to a DOM query if necessary
+      let button =
+        this._toggleButton || document.getElementById("FrenzyClicker_Toggle");
       if (button) {
-        button.textContent = "Auto-clicking " + (self.Enabled ? "ON" : "OFF");
+        button.textContent = "Auto-clicking " + (this.Enabled ? "ON" : "OFF");
         // Visual polish: toggle the 'enabled' class to change button color like vanilla game
-        button.className = self.Enabled ? "option enabled" : "option";
+        button.className = this.Enabled ? "option enabled" : "option";
       }
 
-      if (!self.Enabled) {
-        if (self.mainTicker) {
-          clearInterval(self.mainTicker);
-          self.mainTicker = 0;
+      if (!this.Enabled) {
+        if (this.mainTicker) {
+          clearInterval(this.mainTicker);
+          this.mainTicker = 0;
         }
-        self.debug("Frenzy Clicker paused.");
+        this.debug("Frenzy Clicker paused.");
       } else {
-        if (!self.isRunning()) {
-          self.resume();
+        if (!this.isRunning()) {
+          this.resume();
         }
-        self.debug("Frenzy Clicker resumed.");
+        this.debug("Frenzy Clicker resumed.");
       }
 
-      self.settingsChanged();
+      this.settingsChanged();
     }
 
     speedMod() {
