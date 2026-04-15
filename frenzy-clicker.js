@@ -31,71 +31,76 @@ javascript: (function () {
     settingsMenu() {
       if (Game.onMenu != "prefs") return;
 
-      // Title
-      var div = document.createElement("div");
-      div.className = "title ";
-      div.textContent = "Frenzy Clicker";
-
       var el = document.createDocumentFragment();
 
-      // Header
+      // Title
+      var div = document.createElement("div");
+      div.className = "title";
+      div.textContent = "Frenzy Clicker";
       el.appendChild(div);
 
-      // Toggle & Description
+      // --- Toggle & Description ---
       let toggleContainer = document.createElement("div");
       toggleContainer.className = "listing";
 
       let onOff = document.createElement("a");
       onOff.className = "option";
-      onOff.id = "FrenzyClicker_Toggle";
+      onOff.id = "FrenzyClicker_Toggle"; // Added ID for reliable updating
       onOff.textContent = "Auto-clicking " + (self.Enabled ? "ON" : "OFF");
 
-      // Use an arrow function here to ensure 'self' is recognized correctly
       onOff.onclick = function () {
         self.toggleMod();
       };
 
       toggleContainer.appendChild(onOff);
 
-      // Added Description Label
       let toggleLabel = document.createElement("label");
       toggleLabel.textContent = " (Enable or disable all auto-clicking logic)";
       toggleContainer.appendChild(toggleLabel);
 
       el.appendChild(toggleContainer);
 
-      // Speed
+      // --- Speed Setting ---
       let speed = document.createElement("div");
       speed.className = "listing";
+
       let minus = document.createElement("a");
       minus.className = "option";
       minus.onclick = self.speedMod;
       minus.textContent = "-";
       speed.appendChild(minus);
+
       let text = document.createElement("a");
       text.className = "option";
       text.id = "FrenzyClicker_Speed";
       text.textContent = (1000 / this.Speed).toFixed(2) + " / s";
       text.onclick = self.speedMod;
       speed.appendChild(text);
+
       let plus = document.createElement("a");
       plus.className = "option";
       plus.onclick = self.speedMod;
       plus.textContent = "+";
       speed.appendChild(plus);
+
       let label = document.createElement("label");
-      label.textContent =
-        "(clicks per second during auto-clicking the big cookie)";
+      label.textContent = " (clicks per second during auto-clicking)";
       speed.appendChild(label);
 
       el.appendChild(speed);
 
-      let settings = l("menu").getElementsByClassName("listing");
-
-      settings[0].parentNode.insertBefore(
-        el,
-        settings[settings.length - 1].nextSibling,
-      );
+      // --- Injection Logic ---
+      // We look for the menu and find the very last 'listing' to append after
+      let menu = l("menu");
+      if (menu) {
+        let settings = menu.getElementsByClassName("listing");
+        if (settings.length > 0) {
+          settings[settings.length - 1].parentNode.insertBefore(
+            el,
+            settings[settings.length - 1].nextSibling,
+          );
+        }
+      }
     }
 
     settingsChanged() {
@@ -106,13 +111,14 @@ javascript: (function () {
     toggleMod() {
       self.Enabled = !self.Enabled;
 
-      // 1. Force the UI to update the text immediately
+      // Force text update on the specific button ID
       let button = document.getElementById("FrenzyClicker_Toggle");
       if (button) {
         button.textContent = "Auto-clicking " + (self.Enabled ? "ON" : "OFF");
+        // Visual polish: toggle the 'enabled' class to change button color like vanilla game
+        button.className = self.Enabled ? "option enabled" : "option";
       }
 
-      // 2. Handle the interval logic
       if (!self.Enabled) {
         if (self.mainTicker) {
           clearInterval(self.mainTicker);
@@ -126,41 +132,25 @@ javascript: (function () {
         self.debug("Frenzy Clicker resumed.");
       }
 
-      // 3. Save settings
       self.settingsChanged();
     }
 
     speedMod() {
       let current = Math.round(1000 / self.Speed);
       let next = 0;
-      // Increase/decrease
       if (this.id != "FrenzyClicker_Speed") {
         next = Math.min(
           100,
           Math.max(10, current + (this.innerText == "+" ? 10 : -10)),
         );
-      }
-      // Toggle jumps
-      else {
-        if (current < 10 || current >= 100) {
-          next = 10;
-        } else if (current < 25) {
-          next = 25;
-        } else if (current < 50) {
-          next = 50;
-        } else if (current < 75) {
-          next = 75;
-        } else {
-          next = 100;
-        }
+      } else {
+        if (current < 10 || current >= 100) next = 10;
+        else if (current < 25) next = 25;
+        else if (current < 50) next = 50;
+        else if (current < 75) next = 75;
+        else next = 100;
       }
       self.Speed = 1000 / next;
-      self.debug(
-        "Frenzy Clicker click frequency:",
-        self.Speed.toFixed(2),
-        "ms",
-      );
-
       self.settingsChanged();
     }
 
@@ -168,26 +158,18 @@ javascript: (function () {
       if (!self.hasAnyClickBuffs()) {
         if (self.hadBuffs) {
           self.hadBuffs = false;
-          self.debug("Buff(s) off.");
           if (self.hadCookieStorm) {
             self.hadCookieStorm = false;
-            self.debug("Ensuring Cookie Storm leftovers are cleaned up.");
             while (Game.shimmers.length > 0)
-              Game.shimmers.forEach((shimmer) => shimmer.pop());
+              Game.shimmers.forEach((s) => s.pop());
           }
         }
         return;
       }
 
-      if (!self.hadBuffs) {
-        self.debug("Buff(s) on.");
-      }
-
       if (Game.hasBuff("Cookie storm")) {
-        if (!self.hadCookieStorm) {
-          self.hadCookieStorm = true;
-        }
-        Game.shimmers.forEach((shimmer) => shimmer.pop());
+        self.hadCookieStorm = true;
+        Game.shimmers.forEach((s) => s.pop());
       }
       if (
         Game.hasBuff("Click frenzy") ||
@@ -197,7 +179,6 @@ javascript: (function () {
       ) {
         Game.ClickCookie();
       }
-
       self.hadBuffs = true;
     }
 
@@ -206,21 +187,20 @@ javascript: (function () {
     }
 
     resume() {
-      this.mainTicker = setInterval(this.tick, this.Speed);
+      if (this.Enabled) {
+        this.mainTicker = setInterval(this.tick, this.Speed);
+      }
     }
 
     run() {
       if (!this.isRunning()) {
-        // Check for version match
         let load = true;
         if (Game.version != this.ccVersion) {
           load = confirm(
-            "Frency Clicker " +
+            "Frenzy Clicker " +
               this.version +
-              " is meant for Cookie Clicker version " +
+              " is meant for " +
               this.ccVersion +
-              ", you are playing version " +
-              Game.version +
               ". Start anyway?",
           );
         }
@@ -238,24 +218,19 @@ javascript: (function () {
         Game.UpdateMenu();
 
         this.resume();
-
-        let title = "Frenzy Clicker " + this.version + " loaded";
-        let text =
-          "Click speed: once every " +
-          this.Speed +
-          " milliseconds, or " +
-          (1000 / this.Speed).toFixed(2) +
-          " times per second.";
-
-        Game.Notify(title, text, "", 5, 1);
-        console.info(title + ". " + text);
+        Game.Notify(
+          "Frenzy Clicker " + this.version + " loaded",
+          "Ready to click!",
+          "",
+          5,
+          1,
+        );
       }
-
       return this;
     }
 
     isRunning() {
-      return this.mainTicker > 0;
+      return this.mainTicker !== 0;
     }
 
     debug(...params) {
@@ -268,14 +243,12 @@ javascript: (function () {
     set Speed(val) {
       return (this.settings.frequency = val);
     }
-
     get Enabled() {
       return this.settings.enabled;
     }
     set Enabled(val) {
       return (this.settings.enabled = val);
     }
-
     get Debug() {
       return this.settings.debug;
     }
